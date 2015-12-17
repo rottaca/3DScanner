@@ -64,6 +64,10 @@ public:
 
     void setFrameDataList(std::vector<StereoFrameData>& frameDataSequenze);
 
+    int getMaxDisp(){return m_form->sb_maxDisp->value();}
+    int getP1(){return m_form->sb_penalty1->value();}
+    int getP2(){return m_form->sb_penalty2->value();}
+
 public slots:
     /**
      * slot for starting capture click
@@ -88,6 +92,8 @@ public slots:
 
     void onChangeTab(int idx);
     void onChangeSelectedFrameData();
+
+    void onClickProcessFrameSequence();
 
 private: 
     void connectSignals();

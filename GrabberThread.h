@@ -31,6 +31,7 @@ public:
     bool isCaptureing(){
     	return m_isCaptureing;
     }
+    fcv::VideoCapture* getGrabberL(){return &m_grabber1;}
 
 public slots:
     /**

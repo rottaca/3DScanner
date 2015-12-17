@@ -22,25 +22,28 @@ public:
 	StereoProcessingThread();
 	~StereoProcessingThread();
 
-public slots:
+
     /**
      * @param ...
      */
-    void initSGM();
-    
+    void initSGM(int width, int height, float maxDisp, int p1, int p2);
+
+    bool isInitalized(){return m_isInitialized;}
+
+public slots:
     /**
      * Starts proceesing and calculates disparity maps.
      * @param frameL
      * @param frameR
      */
-    void startProcessing(fcv::Image frameL, fcv::Image frameR);
+    void startProcessing(fcv::Image frameL, fcv::Image frameR, int id);
     
 signals:
     /**
      * @param dispL
      * @param dispR
      */
-    void signalDisparity(fcv::Image dispL, fcv::Image dispR);
+    void signalDisparity(fcv::Image dispL, fcv::Image dispR, int id);
     
     /**
      * @param errStr
@@ -49,6 +52,7 @@ signals:
 private: 
     fcv::SGM m_sgm;
     QThread m_thread;
+    bool m_isInitialized;
 };
 
 #endif //_STEREOPROCESSINGTHREAD_H

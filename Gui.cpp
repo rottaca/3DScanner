@@ -42,6 +42,9 @@ void Gui::connectSignals()
 	connect(m_form->rb_exp_manual_ctrl, SIGNAL(clicked()),this,SLOT(onChangeExposureMode()));
 	connect(m_form->rb_exp_manual_fixed, SIGNAL(clicked()),this,SLOT(onChangeExposureMode()));
 
+
+	connect(m_form->b_process_seq, SIGNAL(clicked()), this, SLOT(onClickProcessFrameSequence()));
+
 //	connect(&m_hwCtrl,SIGNAL(signalRotated(float)),this,SLOT(receivePlatformRotated(float)));
 //	connect(&m_hwCtrl,SIGNAL(signalError(std::string)),this,SLOT(displayError(std::string)));
 //
@@ -88,8 +91,19 @@ void Gui::displayStereoImage(fcv::Image left, fcv::Image right, Ctrl::tTabName t
  * @param right
  */
 void Gui::displayDisparityImage(fcv::Image left, fcv::Image right) {
-	m_form->l_disp_left_proc->setPixmap(QPixmap::fromImage(left.toQImage()));
-	m_form->l_disp_right_proc->setPixmap(QPixmap::fromImage(right.toQImage()));
+	if(!left.isValid() ||!right.isValid())
+		return;
+	fcv::Image dispLColored;
+	fcv::Image dispRColored;
+	float maxRealDisp0 = *std::max_element(left.getPtr<float>(), (float*) (left.getPtr<float>() + left.getWidth() * left.getHeight()));
+	float maxRealDisp1 = *std::max_element(right.getPtr<float>(), (float*) (right.getPtr<float>() + right.getWidth() * right.getHeight()));
+	float maxRealDisp = maxRealDisp0> maxRealDisp1? maxRealDisp0:maxRealDisp1;
+
+	fcv::convertToPseudoColor(&left, &dispLColored, 0, maxRealDisp, 0, 120);
+	fcv::convertToPseudoColor(&right, &dispRColored, 0, maxRealDisp, 0, 120);
+
+	m_form->l_disp_left_proc->setPixmap(QPixmap::fromImage(dispLColored.toQImage()));
+	m_form->l_disp_right_proc->setPixmap(QPixmap::fromImage(dispRColored.toQImage()));
 }
 
 /**
@@ -194,18 +208,26 @@ void Gui::onChangeTab(int idx)
 }
 void Gui::setFrameDataList(std::vector<StereoFrameData>& frameDataSequenze)
 {
+	m_form->li_stereoPairs->blockSignals(true);
 	m_form->li_stereoPairs->clear();
 	for (int i = 0; i < frameDataSequenze.size(); i++) {
 		QListWidgetItem *newItem = new MyQListWidgetItem(i, frameDataSequenze.at(i).DispValid(),frameDataSequenze.at(i).PointCloudValid());
 
 		m_form->li_stereoPairs->insertItem(m_form->li_stereoPairs->count(), newItem);
 	}
+	m_form->li_stereoPairs->blockSignals(false);
 
 }
 void Gui::onChangeSelectedFrameData()
 {
+
 	MyQListWidgetItem* item = (MyQListWidgetItem*)m_form->li_stereoPairs->selectedItems().at(0);
-	m_form->b_process_curr_frame->setEnabled(!item->getDispDone());
+//	m_form->b_process_curr_frame->setEnabled(!item->getDispDone());
 	LOG_FORMAT_INFO("Clicked on %d",(item->getId()));
 	m_ctrl->onChangeSelectedFrameData(item->getId());
+}
+
+void Gui::onClickProcessFrameSequence()
+{
+	m_ctrl->onClickProcessFrameSequenze();
 }

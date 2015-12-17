@@ -88,6 +88,7 @@ signals:
 	void signalStopCapture();
 	void signalChangeExposureMode(fcv::ExposureController::ExposureCtrlMode mode);
 	void signalChangeExposureValue(int val);
+	void signalProcessStereoFrame(fcv::Image imgL, fcv::Image imgR, int id);
 
 public slots:
     /**
@@ -108,7 +109,7 @@ public slots:
      * @param dispL
      * @param dispR
      */
-    void receiveDispairty(fcv::Image dispL, fcv::Image dispR);
+    void receiveDispairty(fcv::Image dispL, fcv::Image dispR, int id);
     
     /**
      * slot for receiving the new point cloud
@@ -152,6 +153,13 @@ private:
     HardwareControllerThread m_hwCtrl;
     OperationMode m_opMode;
     
+	cv::Mat map1x, map1y, map2x, map2y;
+	cv::Mat D1, D2;
+	cv::Mat CM1;
+	cv::Mat CM2;
+	cv::Mat R1, R2, P1, P2;
+	cv::Mat T, H_world_cam;
+
     /**
      * Applies undistortion and rectification of new images.
      * @param framelL
