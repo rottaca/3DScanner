@@ -79,6 +79,8 @@ public:
 	 */
 	void onClickProcessFrameSequenze();
 
+	void onClickProcessPC();
+
 	enum tTabName {TAB_CAPTURE, TAB_STEREO, TAB_3D};
 	void onSwitchTab(tTabName tab);
 	void onChangeSelectedFrameData(int id);
@@ -89,6 +91,7 @@ signals:
 	void signalChangeExposureMode(fcv::ExposureController::ExposureCtrlMode mode);
 	void signalChangeExposureValue(int val);
 	void signalProcessStereoFrame(fcv::Image imgL, fcv::Image imgR, int id);
+	void signalProcessPC(fcv::Image disp, fcv::Image img, fcv::Matrix4x4f pose, int id);
 
 public slots:
     /**
@@ -115,7 +118,7 @@ public slots:
      * slot for receiving the new point cloud
      * @param pcL
      */
-    void receivePointCloud(fcv::PointCloudCreator::PointCloud pcL);
+    void receivePointCloud(fcv::PointCloudCreator::PointCloud pcL, int id);
     
     /**
      * slot that is called when hardware platform rotation is executed completely.

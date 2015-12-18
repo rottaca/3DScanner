@@ -94,12 +94,13 @@ public slots:
     void onChangeSelectedFrameData();
 
     void onClickProcessFrameSequence();
+    void onClickProcessPC();
 
 private: 
     void connectSignals();
 
     QSettings m_guiSettings;
-    GLScene m_glScene;
+    GLScene* m_glScene;
 
 	Ui::MainForm* m_form;
     Ctrl* m_ctrl;

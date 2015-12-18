@@ -15,6 +15,8 @@ Gui::Gui(Ctrl* ctrl) {
 
 	m_form = new Ui::MainForm();
 	m_form->setupUi(this);
+	m_glScene= new GLScene(this);
+	m_form->horizontalLayout_7->replaceWidget(m_form->openGLWidget,m_glScene);
 
 	connectSignals();
 
@@ -42,8 +44,9 @@ void Gui::connectSignals()
 	connect(m_form->rb_exp_manual_ctrl, SIGNAL(clicked()),this,SLOT(onChangeExposureMode()));
 	connect(m_form->rb_exp_manual_fixed, SIGNAL(clicked()),this,SLOT(onChangeExposureMode()));
 
-
 	connect(m_form->b_process_seq, SIGNAL(clicked()), this, SLOT(onClickProcessFrameSequence()));
+
+	connect(m_form->b_process_seq_pcc, SIGNAL(clicked()), this, SLOT(onClickProcessPC()));
 
 //	connect(&m_hwCtrl,SIGNAL(signalRotated(float)),this,SLOT(receivePlatformRotated(float)));
 //	connect(&m_hwCtrl,SIGNAL(signalError(std::string)),this,SLOT(displayError(std::string)));
@@ -209,18 +212,22 @@ void Gui::onChangeTab(int idx)
 void Gui::setFrameDataList(std::vector<StereoFrameData>& frameDataSequenze)
 {
 	m_form->li_stereoPairs->blockSignals(true);
+	m_form->li_stereoPairs_pc->blockSignals(true);
 	m_form->li_stereoPairs->clear();
+	m_form->li_stereoPairs_pc->clear();
 	for (int i = 0; i < frameDataSequenze.size(); i++) {
-		QListWidgetItem *newItem = new MyQListWidgetItem(i, frameDataSequenze.at(i).DispValid(),frameDataSequenze.at(i).PointCloudValid());
+		QListWidgetItem *newItem1 = new MyQListWidgetItem(i, frameDataSequenze.at(i).DispValid(),frameDataSequenze.at(i).PointCloudValid());
+		m_form->li_stereoPairs->insertItem(m_form->li_stereoPairs->count(), newItem1);
 
-		m_form->li_stereoPairs->insertItem(m_form->li_stereoPairs->count(), newItem);
+		QListWidgetItem *newItem2 = new MyQListWidgetItem(i, frameDataSequenze.at(i).DispValid(),frameDataSequenze.at(i).PointCloudValid());
+		m_form->li_stereoPairs_pc->insertItem(m_form->li_stereoPairs_pc->count(), newItem2);
 	}
 	m_form->li_stereoPairs->blockSignals(false);
-
+	m_form->li_stereoPairs_pc->blockSignals(false);
 }
+
 void Gui::onChangeSelectedFrameData()
 {
-
 	MyQListWidgetItem* item = (MyQListWidgetItem*)m_form->li_stereoPairs->selectedItems().at(0);
 //	m_form->b_process_curr_frame->setEnabled(!item->getDispDone());
 	LOG_FORMAT_INFO("Clicked on %d",(item->getId()));
@@ -230,4 +237,9 @@ void Gui::onChangeSelectedFrameData()
 void Gui::onClickProcessFrameSequence()
 {
 	m_ctrl->onClickProcessFrameSequenze();
+}
+
+void Gui::onClickProcessPC()
+{
+	m_ctrl->onClickProcessPC();
 }

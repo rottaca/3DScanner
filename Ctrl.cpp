@@ -31,6 +31,7 @@ Ctrl::~Ctrl() {
 
 void Ctrl::connectSignals() {
 	qRegisterMetaType<fcv::Image>("fcv::Image");
+	qRegisterMetaType<fcv::Matrix4x4f>("fcv::Matrix4x4f");
 	qRegisterMetaType<std::string>("std::string");
 	qRegisterMetaType<fcv::PointCloudCreator::PointCloud>("fcv::PointCloudCreator::PointCloud");
 	qRegisterMetaType<fcv::ExposureController::ExposureCtrlMode>("fcv::ExposureController::ExposureCtrlMode");
@@ -42,7 +43,7 @@ void Ctrl::connectSignals() {
 	connect(&m_hwCtrl, SIGNAL(signalRotated(float)), this, SLOT(receivePlatformRotated(float)));
 	connect(&m_hwCtrl, SIGNAL(signalError(std::string)), this, SLOT(displayError(std::string)));
 
-	connect(&m_pcProc, SIGNAL(signalPointCloud(fcv::PointCloudCreator::PointCloud)), this, SLOT(receivePointCloud(fcv::PointCloudCreator::PointCloud)));
+	connect(&m_pcProc, SIGNAL(signalPointCloud(fcv::PointCloudCreator::PointCloud, int)), this, SLOT(receivePointCloud(fcv::PointCloudCreator::PointCloud, int)));
 	connect(&m_pcProc, SIGNAL(signalError(std::string)), this, SLOT(displayError(std::string)));
 
 	connect(&m_stereoProc, SIGNAL(signalDisparity(fcv::Image, fcv::Image, int)), this, SLOT(receiveDispairty(fcv::Image, fcv::Image, int)));
@@ -53,9 +54,9 @@ void Ctrl::connectSignals() {
 	connect(this, SIGNAL(signalStopCapture()), &m_grabber, SLOT(stopCapture()));
 
 	connect(this, SIGNAL(signalProcessStereoFrame(fcv::Image, fcv::Image, int)), &m_stereoProc, SLOT(startProcessing(fcv::Image, fcv::Image, int)));
+	connect(this, SIGNAL(signalProcessPC(fcv::Image, fcv::Image,fcv::Matrix4x4f, int)), &m_pcProc, SLOT(startProcessing(fcv::Image, fcv::Image, fcv::Matrix4x4f, int)));
 
-	connect(this, SIGNAL(signalChangeExposureMode(fcv::ExposureController::ExposureCtrlMode)), &m_grabber,
-			SLOT(changeExposureMode(fcv::ExposureController::ExposureCtrlMode)));
+	connect(this, SIGNAL(signalChangeExposureMode(fcv::ExposureController::ExposureCtrlMode)), &m_grabber,SLOT(changeExposureMode(fcv::ExposureController::ExposureCtrlMode)));
 	connect(this, SIGNAL(signalChangeExposureValue(int)), &m_grabber, SLOT(changeExposureValue(int)));
 
 }
@@ -105,7 +106,10 @@ void Ctrl::receiveNewFrame(fcv::Image frameL, fcv::Image frameR) {
 	m_gui->displayStereoImage(frameL, frameR, Ctrl::TAB_CAPTURE);
 	if(m_opMode == OM_CAPTURE_FRAME_SEQUENCE){
 		StereoFrameData data;
-		data.setFrame(frameL, frameR);
+		fcv::Image imgLGray, imgRGray;
+		fcv::convertPxFormat(&frameL,&imgLGray,fcv::RGB_888_TO_GRAY8);
+		fcv::convertPxFormat(&frameR,&imgRGray,fcv::RGB_888_TO_GRAY8);
+		data.setFrame(frameL, frameR, imgLGray, imgRGray);
 
 		m_frameDataSequenze.push_back(data);
 
@@ -134,10 +138,7 @@ void Ctrl::receiveDispairty(fcv::Image dispL, fcv::Image dispR, int id) {
 
 	if(++id < m_frameDataSequenze.size())
 	{
-		fcv::Image imgLGray, imgRGray;
-		fcv::convertPxFormat(&m_frameDataSequenze.at(id).imgLeft, &imgLGray, fcv::RGB_888_TO_GRAY8);
-		fcv::convertPxFormat(&m_frameDataSequenze.at(id).imgRight, &imgRGray, fcv::RGB_888_TO_GRAY8);
-		emit signalProcessStereoFrame(imgLGray, imgRGray, id);
+		emit signalProcessStereoFrame(m_frameDataSequenze.at(id).imgLeftGray, m_frameDataSequenze.at(id).imgRightGray, id);
 	}else{
 		if(m_grabber.isCaptureing())
 			m_opMode = OM_FREE_RUN_CAPTURE;
@@ -151,8 +152,37 @@ void Ctrl::receiveDispairty(fcv::Image dispL, fcv::Image dispR, int id) {
  * slot for receiving the new point cloud
  * @param pcL
  */
-void Ctrl::receivePointCloud(fcv::PointCloudCreator::PointCloud pcL) {
+void Ctrl::receivePointCloud(fcv::PointCloudCreator::PointCloud pcL, int id) {
 
+	LOG_FORMAT_INFO("Pointcloud received with id %d", id);
+
+	if(id < m_frameDataSequenze.size())
+		m_frameDataSequenze.at(id).setPointCloudLeft(pcL);
+
+	m_gui->setFrameDataList(m_frameDataSequenze);
+
+
+	if (++id < m_frameDataSequenze.size()) {
+		fcv::Matrix4x4f pose;
+		// TODO
+		pose.setIdentity();
+		for (int y = 0; y < 3; y++) {
+			for (int x = 0; x < 3; x++) {
+				pose.at(y, x) = H_world_cam.at<double>(y, x);
+			}
+		}
+		pose.at(0, 3) = H_world_cam.at<double>(0, 3);
+		pose.at(1, 3) = H_world_cam.at<double>(1, 3);
+		pose.at(2, 3) = H_world_cam.at<double>(2, 3);
+
+		m_opMode = OM_PROCESSING_PCC;
+		emit signalProcessPC(m_frameDataSequenze.at(id).dispLeft, m_frameDataSequenze.at(id).imgLeftRGB, pose, id);
+	} else {
+		if (m_grabber.isCaptureing())
+			m_opMode = OM_FREE_RUN_CAPTURE;
+		else
+			m_opMode = OM_IDLE;
+	}
 }
 
 /**
@@ -262,7 +292,7 @@ void Ctrl::onClickCaptureFrameSequenze() {
 }
 
 /**
- * Called when user wants to process and create a whole sequenze
+ * Called when user wants to process and create a whole sequence
  */
 void Ctrl::onClickProcessFrameSequenze() {
 	if(m_frameDataSequenze.size()<= 0){
@@ -273,10 +303,8 @@ void Ctrl::onClickProcessFrameSequenze() {
 		displayError("Invalid state!");
 		return;
 	}
+	LOG_INFO("Started Processing of stereo.");
 
-	fcv::Image imgLGray, imgRGray;
-	fcv::convertPxFormat(&m_frameDataSequenze.at(0).imgLeft,&imgLGray,fcv::RGB_888_TO_GRAY8);
-	fcv::convertPxFormat(&m_frameDataSequenze.at(0).imgRight,&imgRGray,fcv::RGB_888_TO_GRAY8);
 	int disp = m_gui->getMaxDisp();
 	int p1 = m_gui->getP1();
 	int p2 = m_gui->getP2();
@@ -285,12 +313,43 @@ void Ctrl::onClickProcessFrameSequenze() {
 		displayError("Penalty 2 has to be >= penalty 1");
 		return;
 	}
-	m_stereoProc.initSGM(imgLGray.getWidth(),imgLGray.getHeight(),disp,p1,p2);
+	m_stereoProc.initSGM(m_frameDataSequenze.at(0).imgLeftRGB.getWidth(),m_frameDataSequenze.at(0).imgLeftRGB.getHeight(),disp,p1,p2);
 
 	m_opMode = OM_PROCESSING_STEREO;
-	emit signalProcessStereoFrame(imgLGray,imgRGray,0);
+	emit signalProcessStereoFrame(m_frameDataSequenze.at(0).imgLeftGray,m_frameDataSequenze.at(0).imgRightGray,0);
 }
 
+void Ctrl::onClickProcessPC()
+{
+	if (m_frameDataSequenze.size() <= 0) {
+		displayError("No frame data available!");
+		return;
+	} else if (m_opMode != OM_FREE_RUN_CAPTURE && m_opMode != OM_IDLE) {
+		displayError("Invalid state!");
+		return;
+	}
+	LOG_INFO("Started Processing of PC.");
+	fcv::Vector2f c;
+	c[0] = P1.at<double>(0, 2);
+	c[1] = P1.at<double>(1, 2);
+
+	m_pcProc.initPCC(c, P1.at<double>(0, 0), 0.06);
+	// TODO
+	fcv::Matrix4x4f pose;
+	pose.setIdentity();
+	for (int y = 0; y < 3; y++) {
+		for (int x = 0; x < 3; x++) {
+			pose.at(y, x) = H_world_cam.at<double>(y, x);
+		}
+	}
+	pose.at(0, 3) = H_world_cam.at<double>(0, 3);
+	pose.at(1, 3) = H_world_cam.at<double>(1, 3);
+	pose.at(2, 3) = H_world_cam.at<double>(2, 3);
+
+
+	m_opMode = OM_PROCESSING_PCC;
+	emit signalProcessPC(m_frameDataSequenze.at(0).dispLeft,m_frameDataSequenze.at(0).imgLeftRGB,pose, 0);
+}
 void Ctrl::onSwitchTab(Ctrl::tTabName tab) {
 	LOG_FORMAT_INFO("Tab changed: %d", (int) tab);
 
@@ -302,7 +361,7 @@ void Ctrl::onSwitchTab(Ctrl::tTabName tab) {
 		m_gui->setFrameDataList(m_frameDataSequenze);
 		break;
 	case TAB_3D:
-//		m_gui->setFrameDataList(m_frameDataSequenze);
+		m_gui->setFrameDataList(m_frameDataSequenze);
 		break;
 		default:
 			break;
@@ -315,7 +374,7 @@ void Ctrl::onChangeSelectedFrameData(int id)
 
 	StereoFrameData& data = m_frameDataSequenze.at(id);
 
-	m_gui->displayStereoImage(data.imgLeft,data.imgRight, TAB_STEREO);
+	m_gui->displayStereoImage(data.imgLeftRGB,data.imgRightRGB, TAB_STEREO);
 	m_gui->displayDisparityImage(data.dispLeft,data.dispRight);
 	// TODO PC
 

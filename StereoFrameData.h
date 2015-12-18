@@ -13,8 +13,10 @@
 
 class StereoFrameData {
 public: 
-    fcv::Image imgLeft;
-    fcv::Image imgRight;
+    fcv::Image imgLeftRGB;
+    fcv::Image imgRightRGB;
+    fcv::Image imgLeftGray;
+    fcv::Image imgRightGray;
     fcv::Image dispLeft;
     fcv::Image dispRight;
     fcv::PointCloudCreator::PointCloud pointCloudLeft;
@@ -35,7 +37,7 @@ public:
      * @param frameL
      * @param frameR
      */
-    void setFrame(fcv::Image frameL, fcv::Image frameR);
+    void setFrame(fcv::Image frameLRGB, fcv::Image frameRRGB,fcv::Image frameLGray, fcv::Image frameRGray);
     
     /**
      * @param dispL

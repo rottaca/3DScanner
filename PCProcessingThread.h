@@ -23,13 +23,13 @@ public slots:
     /**
      * @param ...
      */
-    void initPCC();
+    void initPCC(fcv::Vector2f C, float f, float b);
     
     /**
      * @param dispL
      * @param frameL
      */
-    void startProcessing(fcv::Image dispL, fcv::Image frameL);
+    void startProcessing(fcv::Image disp, fcv::Image img, fcv::Matrix4x4f pose, int id);
     
 signals:
     /**
@@ -40,10 +40,13 @@ signals:
     /**
      * @param pcL
      */
-    void signalPointCloud(fcv::PointCloudCreator::PointCloud pcL);
+    void signalPointCloud(fcv::PointCloudCreator::PointCloud pcL, int id);
 private: 
     fcv::PointCloudCreator m_pcc;
     QThread m_thread;
+    fcv::Vector2f m_C;
+    float m_f;
+    float m_b;
 };
 
 #endif //_PCPROCESSINGTHREAD_H

@@ -14,7 +14,7 @@
  * @return bool
  */
 bool StereoFrameData::ImgValid() {
-    return imgLeft.isValid() && imgLeft.isValid();
+    return imgLeftRGB.isValid() && imgLeftRGB.isValid() && imgLeftGray.isValid() && imgRightGray.isValid();
 }
 
 /**
@@ -42,9 +42,11 @@ bool StereoFrameData::CameraPoseValid() {
  * @param frameL
  * @param frameR
  */
-void StereoFrameData::setFrame(fcv::Image frameL, fcv::Image frameR) {
-	imgLeft = frameL;
-	imgRight = frameR;
+void StereoFrameData::setFrame(fcv::Image frameLRGB, fcv::Image frameRRGB,fcv::Image frameLGray, fcv::Image frameRGray) {
+	imgLeftRGB = frameLRGB;
+	imgRightRGB = frameRRGB;
+	imgLeftGray = frameLGray;
+	imgRightGray = frameRGray;
 }
 
 /**
