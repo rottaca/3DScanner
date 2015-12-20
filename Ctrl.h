@@ -92,6 +92,7 @@ signals:
 	void signalChangeExposureValue(int val);
 	void signalProcessStereoFrame(fcv::Image imgL, fcv::Image imgR, int id);
 	void signalProcessPC(fcv::Image disp, fcv::Image img, fcv::Matrix4x4f pose, int id);
+	void signalRotatePlatform(float goalAngle);
 
 public slots:
     /**
@@ -162,6 +163,10 @@ private:
 	cv::Mat CM2;
 	cv::Mat R1, R2, P1, P2;
 	cv::Mat T, H_world_cam;
+
+	int m_platformRotSubDevCnt;
+	int m_currPlatformRotNr;
+	bool m_platformMoving;
 
     /**
      * Applies undistortion and rectification of new images.

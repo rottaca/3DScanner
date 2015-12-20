@@ -4,7 +4,7 @@
 
 
 #include "HardwareController.h"
-
+#include <QtCore/qthread.h>
 /**
  * HardwareController implementation
  */
@@ -13,8 +13,10 @@
 /**
  * @param angle
  */
-void HardwareController::setPlatformAngle(float angle) {
-
+bool HardwareController::setPlatformAngle(float angle) {
+	// Simulate movement
+	QThread::sleep(5);
+	return true;
 }
 
 /**
@@ -31,3 +33,4 @@ float HardwareController::getPlatformAngle() {
 bool HardwareController::initPlatformController(std::string device) {
     return false;
 }
+

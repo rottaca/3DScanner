@@ -9,37 +9,56 @@
 #include <QtWidgets/qwidget.h>
 #include <QtWidgets/qopenglwidget.h>
 
+#include <QtGui/qopenglvertexarrayobject.h>
+#include <QtGui/qopenglfunctions.h>
+#include <QtGui/qopenglbuffer.h>
+#include <QtGui/qopenglshaderprogram.h>
+#include <QtGui/qevent.h>
 #include "GLCamera.h"
 #include "Drawable.h"
 
 #include <vector>
 
 class GLScene : public QOpenGLWidget{
+    Q_OBJECT
 public: 
-    
 	GLScene(QWidget* parent = NULL);
 	~GLScene();
     /**
      * @param obj
      */
-    void addDrawable(Drawable obj);
+    void addDrawable(Drawable* obj);
     
     void removeDrawables();
-    
-    void renderScene();
-    
+
+    void mouseMoveEvent(QMouseEvent *ev);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+
 signals:
-	void signalError(QString err);
+	void signalError(std::string err);
 
 protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
+
 private: 
     GLCamera m_cam;
-    std::vector<Drawable> m_drawableObj;
+    std::vector<Drawable*> m_drawableObj;
 
-    GLuint m_vao_ground, m_vbo_ground;
+	QVector<QVector4D> m_groundVertices;
+    QOpenGLVertexArrayObject m_vaoGround;
+    QOpenGLBuffer m_vboGround;
+
+    QOpenGLShaderProgram m_shaderProg;
+
+    int m_attrPos, m_attrCol, m_uniMVP, m_uniModelMatrix;
+
+    QPointF m_oldMousePos;
+    bool isPressedML;
+    bool isPressedMR;
+    bool isPressedMM;
 
 };
 

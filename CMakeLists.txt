@@ -47,6 +47,7 @@ SET(SOURCE_FILES
     StereoFrameData.cpp 
     StereoProcessingThread.cpp
     MyQListWidgetItem.cpp
+    DrawableDrawablePointCloud.cpp
 )
 
 SET(HEADER_FILES

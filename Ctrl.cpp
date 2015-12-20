@@ -22,6 +22,10 @@ Ctrl::Ctrl() {
 	m_maxSeqNr = 1;
 	m_opMode = OM_IDLE;
 
+	m_platformRotSubDevCnt = 1;
+	m_currPlatformRotNr = 0;
+	m_platformMoving = false;
+
 	connectSignals();
 	loadCalibrationFiles();
 }
@@ -37,6 +41,8 @@ void Ctrl::connectSignals() {
 	qRegisterMetaType<fcv::ExposureController::ExposureCtrlMode>("fcv::ExposureController::ExposureCtrlMode");
 
 	// Slots
+	connect(m_gui, SIGNAL(signalError(std::string)), this, SLOT(displayError(std::string)));
+
 	connect(&m_grabber, SIGNAL(signalNewFrame(fcv::Image, fcv::Image)), this, SLOT(receiveNewFrame(fcv::Image, fcv::Image)));
 	connect(&m_grabber, SIGNAL(signalError(std::string)), this, SLOT(displayError(std::string)));
 
@@ -58,6 +64,8 @@ void Ctrl::connectSignals() {
 
 	connect(this, SIGNAL(signalChangeExposureMode(fcv::ExposureController::ExposureCtrlMode)), &m_grabber,SLOT(changeExposureMode(fcv::ExposureController::ExposureCtrlMode)));
 	connect(this, SIGNAL(signalChangeExposureValue(int)), &m_grabber, SLOT(changeExposureValue(int)));
+
+	connect(this, SIGNAL(signalRotatePlatform(float)), &m_hwCtrl, SLOT(setPlatformAngle(float)));
 
 }
 
@@ -104,7 +112,8 @@ void Ctrl::receiveNewFrame(fcv::Image frameL, fcv::Image frameR) {
 
 	preprocessFrames(frameL,frameR);
 	m_gui->displayStereoImage(frameL, frameR, Ctrl::TAB_CAPTURE);
-	if(m_opMode == OM_CAPTURE_FRAME_SEQUENCE){
+	if(m_opMode == OM_CAPTURE_FRAME_SEQUENCE && !m_platformMoving){
+
 		StereoFrameData data;
 		fcv::Image imgLGray, imgRGray;
 		fcv::convertPxFormat(&frameL,&imgLGray,fcv::RGB_888_TO_GRAY8);
@@ -116,6 +125,12 @@ void Ctrl::receiveNewFrame(fcv::Image frameL, fcv::Image frameR) {
 		if(m_frameDataSequenze.size() >= m_maxSeqNr){
 			m_gui->setFrameDataList(m_frameDataSequenze);
 			m_opMode = OM_FREE_RUN_CAPTURE;
+			m_gui->setStatus("All Frames captured!");
+		}
+		// Go to next platform pos
+		else{
+			m_platformMoving = true;
+			emit signalRotatePlatform(360.0*m_currPlatformRotNr++/(m_platformRotSubDevCnt+1));
 		}
 
 		LOG_FORMAT_INFO("Added frame %d of %d",m_frameDataSequenze.size(),m_maxSeqNr);
@@ -140,12 +155,12 @@ void Ctrl::receiveDispairty(fcv::Image dispL, fcv::Image dispR, int id) {
 	{
 		emit signalProcessStereoFrame(m_frameDataSequenze.at(id).imgLeftGray, m_frameDataSequenze.at(id).imgRightGray, id);
 	}else{
+		m_gui->setStatus("Disparity for all frames calculated!");
 		if(m_grabber.isCaptureing())
 			m_opMode = OM_FREE_RUN_CAPTURE;
 		else
 			m_opMode = OM_IDLE;
 	}
-
 }
 
 /**
@@ -178,6 +193,7 @@ void Ctrl::receivePointCloud(fcv::PointCloudCreator::PointCloud pcL, int id) {
 		m_opMode = OM_PROCESSING_PCC;
 		emit signalProcessPC(m_frameDataSequenze.at(id).dispLeft, m_frameDataSequenze.at(id).imgLeftRGB, pose, id);
 	} else {
+		m_gui->setStatus("All point clouds calculated!");
 		if (m_grabber.isCaptureing())
 			m_opMode = OM_FREE_RUN_CAPTURE;
 		else
@@ -191,6 +207,8 @@ void Ctrl::receivePointCloud(fcv::PointCloudCreator::PointCloud pcL, int id) {
  */
 void Ctrl::receivePlatformRotated(float angle) {
 
+	m_gui->setStatus("Platform rotated!");
+	m_platformMoving = false;
 }
 
 /**
@@ -233,6 +251,7 @@ bool Ctrl::onClickStartCapture(std::string camL, std::string camR) {
 	emit signalStartCapture();
 
 	m_opMode = OM_FREE_RUN_CAPTURE;
+	m_gui->setStatus("Capture started!");
 	return true;
 }
 
@@ -285,10 +304,15 @@ void Ctrl::onClickCaptureFrameSequenze() {
 		return;
 	}
 
-	m_maxSeqNr = 1;
+	m_platformMoving = true;
+	m_currPlatformRotNr = 0;
+	emit signalRotatePlatform(0);
+
+	m_maxSeqNr = m_platformRotSubDevCnt+1;
 	m_frameDataSequenze.clear();
 	m_opMode = OM_CAPTURE_FRAME_SEQUENCE;
 	LOG_INFO("Capture sequence started.");
+	m_gui->setStatus("Capture sequence started.");
 }
 
 /**
@@ -303,7 +327,7 @@ void Ctrl::onClickProcessFrameSequenze() {
 		displayError("Invalid state!");
 		return;
 	}
-	LOG_INFO("Started Processing of stereo.");
+	m_gui->setStatus("Started Processing of stereo frames.");
 
 	int disp = m_gui->getMaxDisp();
 	int p1 = m_gui->getP1();
@@ -328,6 +352,7 @@ void Ctrl::onClickProcessPC()
 		displayError("Invalid state!");
 		return;
 	}
+	m_gui->setStatus("Started Processing of point cloud.");
 	LOG_INFO("Started Processing of PC.");
 	fcv::Vector2f c;
 	c[0] = P1.at<double>(0, 2);
@@ -376,7 +401,9 @@ void Ctrl::onChangeSelectedFrameData(int id)
 
 	m_gui->displayStereoImage(data.imgLeftRGB,data.imgRightRGB, TAB_STEREO);
 	m_gui->displayDisparityImage(data.dispLeft,data.dispRight);
-	// TODO PC
+	m_gui->removePointClouds();
+	if(data.PointCloudValid())
+		m_gui->addPointCloud(data.pointCloudLeft);
 
 }
 /**

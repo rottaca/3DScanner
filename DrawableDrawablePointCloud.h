@@ -12,11 +12,10 @@
 
 class DrawablePointCloud: public Drawable {
 public: 
-    int m_vaoId;
-    int m_vboId;
-    fcv::PointCloudCreator::PointCloud m_pointCloud;
-    
-    void createBuffers();
+	DrawablePointCloud();
+	~DrawablePointCloud();
+
+    bool createBuffers(int attrPos, int attrCol);
     
     void drawData();
     // TODO
@@ -25,7 +24,12 @@ public:
     /**
      * @param pc
      */
-    void setPointCloudData(fcv::PointCloudCreator::PointCloud pc);
+    void setPointCloudData(fcv::PointCloudCreator::PointCloud pc, float pointSize);
+
+private:
+    fcv::PointCloudCreator::PointCloud m_pointCloud;
+    float m_pointSize;
+
 };
 
 #endif //_POINTCLOUD_H

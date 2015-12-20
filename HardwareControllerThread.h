@@ -30,11 +30,6 @@ public slots:
     void setPlatformAngle(float angle);
     
     /**
-     * returns the current angle (assuming that the last rotation command is completely executed)
-     */
-    float getPlatformAngle();
-    
-    /**
      * initializes the platform controller and opens a connection to the specified device.
      * @param device
      */

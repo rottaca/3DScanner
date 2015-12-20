@@ -15,7 +15,7 @@ public:
     /**
      * @param angle
      */
-    void setPlatformAngle(float angle);
+    bool setPlatformAngle(float angle);
     
     float getPlatformAngle();
     
@@ -23,6 +23,7 @@ public:
      * @param device
      */
     bool initPlatformController(std::string device);
+
 private: 
     float m_currentAngle;
 };

@@ -25,16 +25,12 @@ HardwareControllerThread::~HardwareControllerThread() {
  * @param angle
  */
 void HardwareControllerThread::setPlatformAngle(float angle) {
-
+	if(m_hwCtrl.setPlatformAngle(angle))
+		emit signalRotated(angle);
+	else
+		emit signalError("Platform rotation failed!");
 }
 
-/**
- * returns the current angle (assuming that the last rotation command is completely executed)
- * @return float
- */
-float HardwareControllerThread::getPlatformAngle() {
-    return 0.0;
-}
 
 /**
  * initializes the platform controller and opens a connection to the specified device.

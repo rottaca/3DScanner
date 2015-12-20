@@ -14,6 +14,8 @@
 #include "ui_mainform.h"
 #include "StereoFrameData.h"
 #include "MyQListWidgetItem.h"
+#include "DrawableDrawablePointCloud.h"
+#include "Drawable.h"
 
 #include <string>
 #include <vector>
@@ -68,6 +70,8 @@ public:
     int getP1(){return m_form->sb_penalty1->value();}
     int getP2(){return m_form->sb_penalty2->value();}
 
+    void setStatus(std::string text);
+
 public slots:
     /**
      * slot for starting capture click
@@ -91,10 +95,15 @@ public slots:
     void onChangeExposureValue(int val);
 
     void onChangeTab(int idx);
-    void onChangeSelectedFrameData();
+    void onChangeSelectedFrameDataStereoTab();
+    void onChangeSelectedFrameData3DTab();
 
     void onClickProcessFrameSequence();
     void onClickProcessPC();
+
+    void onGLSceneError(std::string err);
+signals:
+	void signalError(std::string err);
 
 private: 
     void connectSignals();

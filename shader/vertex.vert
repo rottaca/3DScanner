@@ -1,11 +1,15 @@
 #version 400
 
+in vec4 vPos;
+in vec4 vCol;
 
-in vec3 vPos;
-in mat4 mMVP;
-in mat4 mMV;
+varying vec4 vColOut;
 
-void main () 
+uniform mat4 mMVP;
+uniform mat4 mModelMatrix;
+
+void main() 
 {
-  	gl_Position = vec4 (vPos, 1.0);
+	vColOut = vCol;
+  	gl_Position = mMVP*mModelMatrix*vPos;
 }

@@ -35,7 +35,8 @@ void Gui::connectSignals()
 	connect(m_form->b_start_capture,SIGNAL(clicked()),this,SLOT(onClickStartCapture()));
 	connect(m_form->b_captureStereoFrame, SIGNAL(clicked()),this,SLOT(onClickCapture()));
 	connect(m_form->tw_view_tabs, SIGNAL(currentChanged(int)),this,SLOT(onChangeTab(int)));
-	connect(m_form->li_stereoPairs, SIGNAL(itemSelectionChanged()),this,SLOT(onChangeSelectedFrameData()));
+	connect(m_form->li_stereoPairs, SIGNAL(itemSelectionChanged()),this,SLOT(onChangeSelectedFrameDataStereoTab()));
+	connect(m_form->li_stereoPairs_pc, SIGNAL(itemSelectionChanged()),this,SLOT(onChangeSelectedFrameData3DTab()));
 
 	connect(m_form->sl_exp_manual_ctrl,SIGNAL(valueChanged(int)),this,SLOT(onChangeExposureValue(int)));
 	connect(m_form->sl_exp_manual_fixed,SIGNAL(valueChanged(int)),this,SLOT(onChangeExposureValue(int)));
@@ -47,6 +48,8 @@ void Gui::connectSignals()
 	connect(m_form->b_process_seq, SIGNAL(clicked()), this, SLOT(onClickProcessFrameSequence()));
 
 	connect(m_form->b_process_seq_pcc, SIGNAL(clicked()), this, SLOT(onClickProcessPC()));
+
+	connect(m_glScene,SIGNAL(signalError(std::string)),this,SLOT(onGLSceneError(std::string)));
 
 //	connect(&m_hwCtrl,SIGNAL(signalRotated(float)),this,SLOT(receivePlatformRotated(float)));
 //	connect(&m_hwCtrl,SIGNAL(signalError(std::string)),this,SLOT(displayError(std::string)));
@@ -94,8 +97,9 @@ void Gui::displayStereoImage(fcv::Image left, fcv::Image right, Ctrl::tTabName t
  * @param right
  */
 void Gui::displayDisparityImage(fcv::Image left, fcv::Image right) {
-	if(!left.isValid() ||!right.isValid())
+	if(!left.isValid() ||!right.isValid() || m_form->tw_view_tabs->currentIndex() != 1)
 		return;
+
 	fcv::Image dispLColored;
 	fcv::Image dispRColored;
 	float maxRealDisp0 = *std::max_element(left.getPtr<float>(), (float*) (left.getPtr<float>() + left.getWidth() * left.getHeight()));
@@ -115,6 +119,9 @@ void Gui::displayDisparityImage(fcv::Image left, fcv::Image right) {
  * @return int
  */
 int Gui::addPointCloud(fcv::PointCloudCreator::PointCloud pc) {
+	DrawablePointCloud* draw = new DrawablePointCloud;
+	draw->setPointCloudData(pc,2);
+    m_glScene->addDrawable(draw);
     return 0;
 }
 
@@ -122,7 +129,7 @@ int Gui::addPointCloud(fcv::PointCloudCreator::PointCloud pc) {
  * reomoves all displayed point clouds
  */
 void Gui::removePointClouds() {
-
+	m_glScene->removeDrawables();
 }
 
 /**
@@ -170,6 +177,10 @@ void Gui::onClickCapture() {
 	m_ctrl->onClickCaptureFrameSequenze();
 }
 
+void Gui::setStatus(std::string text)
+{
+	m_form->l_status->setText(text.c_str());
+}
 /**
  * slot for changing exposure mode
  */
@@ -226,7 +237,7 @@ void Gui::setFrameDataList(std::vector<StereoFrameData>& frameDataSequenze)
 	m_form->li_stereoPairs_pc->blockSignals(false);
 }
 
-void Gui::onChangeSelectedFrameData()
+void Gui::onChangeSelectedFrameDataStereoTab()
 {
 	MyQListWidgetItem* item = (MyQListWidgetItem*)m_form->li_stereoPairs->selectedItems().at(0);
 //	m_form->b_process_curr_frame->setEnabled(!item->getDispDone());
@@ -234,6 +245,13 @@ void Gui::onChangeSelectedFrameData()
 	m_ctrl->onChangeSelectedFrameData(item->getId());
 }
 
+void Gui::onChangeSelectedFrameData3DTab()
+{
+	MyQListWidgetItem* item = (MyQListWidgetItem*)m_form->li_stereoPairs_pc->selectedItems().at(0);
+//	m_form->b_process_curr_frame->setEnabled(!item->getDispDone());
+	LOG_FORMAT_INFO("Clicked on %d",(item->getId()));
+	m_ctrl->onChangeSelectedFrameData(item->getId());
+}
 void Gui::onClickProcessFrameSequence()
 {
 	m_ctrl->onClickProcessFrameSequenze();
@@ -242,4 +260,9 @@ void Gui::onClickProcessFrameSequence()
 void Gui::onClickProcessPC()
 {
 	m_ctrl->onClickProcessPC();
+}
+
+void Gui::onGLSceneError(std::string err)
+{
+	emit signalError(err);
 }
