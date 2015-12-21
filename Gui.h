@@ -101,6 +101,8 @@ public slots:
     void onClickProcessFrameSequence();
     void onClickProcessPC();
 
+    void onClickShowGroundPlane();
+
     void onGLSceneError(std::string err);
 signals:
 	void signalError(std::string err);

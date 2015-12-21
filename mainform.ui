@@ -622,7 +622,18 @@
               </property>
               <layout class="QFormLayout" name="formLayout_5">
                <item row="0" column="0">
-                <widget class="QListWidget" name="li_stereoPairs_pc"/>
+                <widget class="QListWidget" name="li_stereoPairs_pc">
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::MultiSelection</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QCheckBox" name="cb_showGroundPlane">
+                 <property name="text">
+                  <string>Display ground plane</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>

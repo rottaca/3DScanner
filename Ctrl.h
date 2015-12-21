@@ -83,7 +83,8 @@ public:
 
 	enum tTabName {TAB_CAPTURE, TAB_STEREO, TAB_3D};
 	void onSwitchTab(tTabName tab);
-	void onChangeSelectedFrameData(int id);
+	void onChangeSelectedFrameDataStereo(int id);
+	void onChangeSelectedFrameDataPC(std::vector<int> ids);
 
 signals:
 	void signalStartCapture();

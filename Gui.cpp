@@ -50,6 +50,7 @@ void Gui::connectSignals()
 	connect(m_form->b_process_seq_pcc, SIGNAL(clicked()), this, SLOT(onClickProcessPC()));
 
 	connect(m_glScene,SIGNAL(signalError(std::string)),this,SLOT(onGLSceneError(std::string)));
+	connect(m_form->cb_showGroundPlane,SIGNAL(clicked()),this,SLOT(onClickShowGroundPlane()));
 
 //	connect(&m_hwCtrl,SIGNAL(signalRotated(float)),this,SLOT(receivePlatformRotated(float)));
 //	connect(&m_hwCtrl,SIGNAL(signalError(std::string)),this,SLOT(displayError(std::string)));
@@ -242,15 +243,18 @@ void Gui::onChangeSelectedFrameDataStereoTab()
 	MyQListWidgetItem* item = (MyQListWidgetItem*)m_form->li_stereoPairs->selectedItems().at(0);
 //	m_form->b_process_curr_frame->setEnabled(!item->getDispDone());
 	LOG_FORMAT_INFO("Clicked on %d",(item->getId()));
-	m_ctrl->onChangeSelectedFrameData(item->getId());
+	m_ctrl->onChangeSelectedFrameDataStereo(item->getId());
 }
 
 void Gui::onChangeSelectedFrameData3DTab()
 {
-	MyQListWidgetItem* item = (MyQListWidgetItem*)m_form->li_stereoPairs_pc->selectedItems().at(0);
-//	m_form->b_process_curr_frame->setEnabled(!item->getDispDone());
-	LOG_FORMAT_INFO("Clicked on %d",(item->getId()));
-	m_ctrl->onChangeSelectedFrameData(item->getId());
+	QList<QListWidgetItem*> items = m_form->li_stereoPairs_pc->selectedItems();
+	std::vector<int> indices;
+	for(int i = 0; i < items.size(); i++){
+		indices.push_back(((MyQListWidgetItem*)items.at(i))->getId());
+	}
+
+	m_ctrl->onChangeSelectedFrameDataPC(indices);
 }
 void Gui::onClickProcessFrameSequence()
 {
@@ -265,4 +269,9 @@ void Gui::onClickProcessPC()
 void Gui::onGLSceneError(std::string err)
 {
 	emit signalError(err);
+}
+
+void Gui::onClickShowGroundPlane()
+{
+	m_glScene->showGroundPlane(m_form->cb_showGroundPlane->isChecked());
 }

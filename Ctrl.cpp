@@ -392,7 +392,7 @@ void Ctrl::onSwitchTab(Ctrl::tTabName tab) {
 			break;
 	}
 }
-void Ctrl::onChangeSelectedFrameData(int id)
+void Ctrl::onChangeSelectedFrameDataStereo(int id)
 {
 	if(id >= m_frameDataSequenze.size())
 		return;
@@ -401,10 +401,18 @@ void Ctrl::onChangeSelectedFrameData(int id)
 
 	m_gui->displayStereoImage(data.imgLeftRGB,data.imgRightRGB, TAB_STEREO);
 	m_gui->displayDisparityImage(data.dispLeft,data.dispRight);
+}
+void Ctrl::onChangeSelectedFrameDataPC(std::vector<int> ids)
+{
 	m_gui->removePointClouds();
-	if(data.PointCloudValid())
-		m_gui->addPointCloud(data.pointCloudLeft);
 
+	for (int i = 0; i < ids.size(); i++) {
+		if (ids.at(i) >= m_frameDataSequenze.size())
+			continue;
+		StereoFrameData& data = m_frameDataSequenze.at(ids.at(i));
+		if (data.PointCloudValid())
+			m_gui->addPointCloud(data.pointCloudLeft);
+	}
 }
 /**
  * Applies undistortion and rectification of new images.

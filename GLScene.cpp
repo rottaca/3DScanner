@@ -22,6 +22,7 @@ GLScene::GLScene(QWidget* parent): QOpenGLWidget(parent)
 	isPressedML = false;
 	isPressedMR = false;
 	isPressedMM = false;
+	m_showGroundPlane = false;
 }
 GLScene::~GLScene()
 {
@@ -150,9 +151,11 @@ void GLScene::paintGL()
 		m_drawableObj.at(i)->drawData();
 	}
 
-	m_vaoGround.bind();
-	glDrawArrays(GL_TRIANGLES,0, 6);
-	m_vaoGround.release();
+	if (m_showGroundPlane) {
+		m_vaoGround.bind();
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		m_vaoGround.release();
+	}
 
 }
 void GLScene::resizeGL(int width, int height)
@@ -223,3 +226,8 @@ void GLScene::mouseReleaseEvent(QMouseEvent *event) {
 	}
 }
 
+void GLScene::showGroundPlane(bool show)
+{
+	m_showGroundPlane = show;
+	repaint();
+}

@@ -35,6 +35,7 @@ public:
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
 
+    void showGroundPlane(bool show);
 signals:
 	void signalError(std::string err);
 
@@ -59,6 +60,7 @@ private:
     bool isPressedML;
     bool isPressedMR;
     bool isPressedMM;
+    bool m_showGroundPlane;
 
 };
 
