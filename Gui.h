@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <FreeCV/FreeCV.h>
+#include <FreeCV/Interfaces/QtInterface.h>
 
 
 class Gui: public QWidget {

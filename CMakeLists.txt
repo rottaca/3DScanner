@@ -10,10 +10,6 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 
 
-if(Qt5Widgets_FOUND)
-    add_definitions(-DQT_FOUND)
-endif()
-
 #########################################################
 # FIND GLUT
 #########################################################
@@ -37,7 +33,8 @@ endif(NOT OPENGL_FOUND)
 
 SET(SOURCE_FILES 
     Ctrl.cpp
-    GLCamera.cpp
+    GLFPSCamera.cpp
+    GLArcBallCamera.cpp
     GLScene.cpp
     GrabberThread.cpp
     Gui.cpp
@@ -61,6 +58,6 @@ ADD_EXECUTABLE(3DScanner ${SOURCE_FILES} ${HEADER_FILES} ${UIS_HDRS})
 
 
 set_target_properties(3DScanner PROPERTIES AUTOMOC TRUE)
-qt5_use_modules(3DScanner Widgets OpenGL)
+qt5_use_modules(3DScanner Widgets OpenGL SerialPort)
 
 TARGET_LINK_LIBRARIES(3DScanner FreeCV ${OpenCV_LIBS} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})

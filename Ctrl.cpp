@@ -101,6 +101,16 @@ void Ctrl::loadCalibrationFiles() {
 	fs1["D2"] >> D2;
 	fs1["T"] >> T;
 	fs2["InvExtTransform"] >> H_world_cam;
+
+	m_initialPose.setIdentity();
+	for (int y = 0; y < 3; y++) {
+		for (int x = 0; x < 3; x++) {
+			m_initialPose.at(y, x) = H_world_cam.at<double>(y, x);
+		}
+	}
+	m_initialPose.at(0, 3) = H_world_cam.at<double>(0, 3);
+	m_initialPose.at(1, 3) = H_world_cam.at<double>(1, 3);
+	m_initialPose.at(2, 3) = H_world_cam.at<double>(2, 3);
 }
 
 /**
@@ -120,6 +130,16 @@ void Ctrl::receiveNewFrame(fcv::Image frameL, fcv::Image frameR) {
 		fcv::convertPxFormat(&frameR,&imgRGray,fcv::RGB_888_TO_GRAY8);
 		data.setFrame(frameL, frameR, imgLGray, imgRGray);
 
+		float angle = 2*M_PI * float(m_currPlatformRotNr)/(m_platformRotSubDevCnt+1);
+		fcv::Matrix4x4f updatePose;
+		updatePose.setIdentity();
+		fcv::Vector3f axis;
+		axis[0] = 0;
+		axis[1] = 0;
+		axis[2] = 1;
+		updatePose.rotate(axis,angle);
+		data.setCameraPose(updatePose*m_initialPose);
+
 		m_frameDataSequenze.push_back(data);
 
 		if(m_frameDataSequenze.size() >= m_maxSeqNr){
@@ -130,7 +150,7 @@ void Ctrl::receiveNewFrame(fcv::Image frameL, fcv::Image frameR) {
 		// Go to next platform pos
 		else{
 			m_platformMoving = true;
-			emit signalRotatePlatform(360.0*m_currPlatformRotNr++/(m_platformRotSubDevCnt+1));
+			emit signalRotatePlatform(360.0*(++m_currPlatformRotNr)/(m_platformRotSubDevCnt+1));
 		}
 
 		LOG_FORMAT_INFO("Added frame %d of %d",m_frameDataSequenze.size(),m_maxSeqNr);
@@ -178,20 +198,10 @@ void Ctrl::receivePointCloud(fcv::PointCloudCreator::PointCloud pcL, int id) {
 
 
 	if (++id < m_frameDataSequenze.size()) {
-		fcv::Matrix4x4f pose;
-		// TODO
-		pose.setIdentity();
-		for (int y = 0; y < 3; y++) {
-			for (int x = 0; x < 3; x++) {
-				pose.at(y, x) = H_world_cam.at<double>(y, x);
-			}
-		}
-		pose.at(0, 3) = H_world_cam.at<double>(0, 3);
-		pose.at(1, 3) = H_world_cam.at<double>(1, 3);
-		pose.at(2, 3) = H_world_cam.at<double>(2, 3);
+		StereoFrameData& fr = m_frameDataSequenze.at(id);
 
 		m_opMode = OM_PROCESSING_PCC;
-		emit signalProcessPC(m_frameDataSequenze.at(id).dispLeft, m_frameDataSequenze.at(id).imgLeftRGB, pose, id);
+		emit signalProcessPC(fr.dispLeft, fr.imgLeftRGB, fr.cameraPose, id);
 	} else {
 		m_gui->setStatus("All point clouds calculated!");
 		if (m_grabber.isCaptureing())
@@ -241,6 +251,10 @@ bool Ctrl::onClickStartCapture(std::string camL, std::string camR) {
 	if (!m_grabber.initGrabber(camL, camR)) {
 		displayError("Can't open device!");
 		return false;
+	}
+	if(!m_hwCtrl.initPlatformController("/dev/tty0")){
+		displayError("Can't open serial device!");
+//		return false;
 	}
 
 	initUndistortRectifyMap(CM1, D1, R1, P1, cv::Size(m_grabber.getGrabberL()->getWidth(),m_grabber.getGrabberL()->getHeight()), CV_32FC1, map1x, map1y);
@@ -359,21 +373,10 @@ void Ctrl::onClickProcessPC()
 	c[1] = P1.at<double>(1, 2);
 
 	m_pcProc.initPCC(c, P1.at<double>(0, 0), 0.06);
-	// TODO
-	fcv::Matrix4x4f pose;
-	pose.setIdentity();
-	for (int y = 0; y < 3; y++) {
-		for (int x = 0; x < 3; x++) {
-			pose.at(y, x) = H_world_cam.at<double>(y, x);
-		}
-	}
-	pose.at(0, 3) = H_world_cam.at<double>(0, 3);
-	pose.at(1, 3) = H_world_cam.at<double>(1, 3);
-	pose.at(2, 3) = H_world_cam.at<double>(2, 3);
 
-
+	StereoFrameData& fr = m_frameDataSequenze.at(0);
 	m_opMode = OM_PROCESSING_PCC;
-	emit signalProcessPC(m_frameDataSequenze.at(0).dispLeft,m_frameDataSequenze.at(0).imgLeftRGB,pose, 0);
+	emit signalProcessPC(fr.dispLeft, fr.imgLeftRGB, fr.cameraPose, 0);
 }
 void Ctrl::onSwitchTab(Ctrl::tTabName tab) {
 	LOG_FORMAT_INFO("Tab changed: %d", (int) tab);

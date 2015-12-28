@@ -77,12 +77,12 @@ void Gui::connectSignals()
 void Gui::displayStereoImage(fcv::Image left, fcv::Image right, Ctrl::tTabName tab) {
 	switch (tab) {
 	case Ctrl::TAB_CAPTURE:
-		m_form->l_img_left_capture->setPixmap(QPixmap::fromImage(left.toQImage()));
-		m_form->l_img_right_capture->setPixmap(QPixmap::fromImage(right.toQImage()));
+		m_form->l_img_left_capture->setPixmap(QPixmap::fromImage(fcv::toQImage(left)));
+		m_form->l_img_right_capture->setPixmap(QPixmap::fromImage(fcv::toQImage(right)));
 		break;
 	case Ctrl::TAB_STEREO:
-		m_form->l_img_left_proc->setPixmap(QPixmap::fromImage(left.toQImage()));
-		m_form->l_img_right_proc->setPixmap(QPixmap::fromImage(right.toQImage()));
+		m_form->l_img_left_proc->setPixmap(QPixmap::fromImage(fcv::toQImage(left)));
+		m_form->l_img_right_proc->setPixmap(QPixmap::fromImage(fcv::toQImage(right)));
 		break;
 	case Ctrl::TAB_3D:
 
@@ -110,8 +110,8 @@ void Gui::displayDisparityImage(fcv::Image left, fcv::Image right) {
 	fcv::convertToPseudoColor(&left, &dispLColored, 0, maxRealDisp, 0, 120);
 	fcv::convertToPseudoColor(&right, &dispRColored, 0, maxRealDisp, 0, 120);
 
-	m_form->l_disp_left_proc->setPixmap(QPixmap::fromImage(dispLColored.toQImage()));
-	m_form->l_disp_right_proc->setPixmap(QPixmap::fromImage(dispRColored.toQImage()));
+	m_form->l_disp_left_proc->setPixmap(QPixmap::fromImage(fcv::toQImage(dispLColored)));
+	m_form->l_disp_right_proc->setPixmap(QPixmap::fromImage(fcv::toQImage(dispRColored)));
 }
 
 /**

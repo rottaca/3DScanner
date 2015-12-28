@@ -23,7 +23,7 @@ public:
     /**
      * contains complete extrinsic transformation from model to world coordinate system.
      */
-    fcv::Matrix3x3f cameraPose;
+    fcv::Matrix4x4f cameraPose;
     
     bool ImgValid();
     
@@ -53,7 +53,7 @@ public:
     /**
      * @param Matrix3x3f pose
      */
-    void setCameraPose(fcv::Matrix3x3f pose);
+    void setCameraPose(fcv::Matrix4x4f pose);
 };
 
 #endif //_STEREOFRAMEDATA_H

@@ -165,6 +165,8 @@ private:
 	cv::Mat R1, R2, P1, P2;
 	cv::Mat T, H_world_cam;
 
+	fcv::Matrix4x4f m_initialPose;
+
 	int m_platformRotSubDevCnt;
 	int m_currPlatformRotNr;
 	bool m_platformMoving;

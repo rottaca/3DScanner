@@ -38,6 +38,6 @@ void HardwareControllerThread::setPlatformAngle(float angle) {
  * @return bool
  */
 bool HardwareControllerThread::initPlatformController(std::string device) {
-    return false;
+	return m_hwCtrl.initPlatformController(device);
 }
 

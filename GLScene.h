@@ -14,10 +14,11 @@
 #include <QtGui/qopenglbuffer.h>
 #include <QtGui/qopenglshaderprogram.h>
 #include <QtGui/qevent.h>
-#include "GLCamera.h"
 #include "Drawable.h"
 
 #include <vector>
+//#include "GLFPSCamera.h"
+#include "GLArcBallCamera.h"
 
 class GLScene : public QOpenGLWidget{
     Q_OBJECT
@@ -45,7 +46,7 @@ protected:
     void resizeGL(int width, int height);
 
 private: 
-    GLCamera m_cam;
+    GLArcBallCamera m_cam;
     std::vector<Drawable*> m_drawableObj;
 
 	QVector<QVector4D> m_groundVertices;

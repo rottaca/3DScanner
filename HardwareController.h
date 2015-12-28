@@ -9,9 +9,17 @@
 #include <string>
 #include <vector>
 
-class HardwareController{
+#include <QtSerialPort/qserialport.h>
+#include <QtCore/qobject.h>
+
+#include <FreeCV/FreeCV.h>
+
+class HardwareController: public QObject{
+	Q_OBJECT
+
 public: 
-    
+	HardwareController();
+	~HardwareController();
     /**
      * @param angle
      */
@@ -24,8 +32,10 @@ public:
      */
     bool initPlatformController(std::string device);
 
+
 private: 
     float m_currentAngle;
+    QSerialPort* m_port;
 };
 
 #endif //_HARDWARECONTROLLER_H

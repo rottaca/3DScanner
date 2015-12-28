@@ -69,6 +69,6 @@ void StereoFrameData::setPointCloudLeft(fcv::PointCloudCreator::PointCloud pc) {
 /**
  * @param Matrix3x3f pose
  */
-void StereoFrameData::setCameraPose(fcv::Matrix3x3f pose) {
+void StereoFrameData::setCameraPose(fcv::Matrix4x4f pose) {
 	cameraPose = pose;
 }
